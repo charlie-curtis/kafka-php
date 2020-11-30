@@ -225,13 +225,18 @@ class Socket
             throw new \Kafka\Exception('Cannot open without port.');
         }
 
-        $this->stream = @fsockopen(
-            $this->host,
-            $this->port,
-            $errno,
-            $errstr,
-            $this->sendTimeoutSec + ($this->sendTimeoutUsec / 1000000)
-        );
+	$opts = array(
+		'socket' => array(
+			'tcp_nodelay' => true
+		),
+	);
+
+
+	$timeout = $this->sendTimeoutSec + ($this->sendTimeoutUsec / 1000000);
+	$context = stream_context_create($opts);
+
+	$stream = stream_socket_client("tcp://$this->host:$this->port", $errno, $errstr, $timeout, STREAM_CLIENT_CONNECT, $context);
+	$this->stream = $stream;
 
         if ($this->stream == false) {
             $error = 'Could not connect to '
